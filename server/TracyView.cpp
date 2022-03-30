@@ -305,30 +305,61 @@ bool View::ViewDispatch( const char* fileName, int line, uint64_t symAddr )
 const char* View::ShortenNamespace( const char* name ) const
 {
     if( m_namespace == Namespace::Full ) return name;
-    if( m_namespace == Namespace::Short )
-    {
-        auto ptr = name;
-        while( *ptr != '\0' ) ptr++;
-        while( ptr > name && *ptr != ':' ) ptr--;
-        if( *ptr == ':' ) ptr++;
-        return ptr;
-    }
 
-    static char buf[1024];
-    auto dst = buf;
-    auto ptr = name;
-    for(;;)
+    int sep = 0;
+    int i = 0;
+    while (name[i] != '\0') {
+        if (name[i] == ' ') sep = i;
+        ++i;
+    }
+    int len = i;
+
+    bool objc = (len > 4) && (name[0] == '+' || name[0] == '-') && (name [1] == '[') && sep && (name[len - 1] == ']');
+    
+    if (objc) 
     {
-        auto start = ptr;
-        while( *ptr != '\0' && *ptr != ':' ) ptr++;
-        if( *ptr == '\0' )
+        static char buf[1024];
+        auto dst = buf;
+        if( m_namespace == Namespace::Short )
         {
-            memcpy( dst, start, ptr - start + 1 );
+            memcpy( dst, &name[sep + 1], len - sep - 2);
+            dst += len - sep - 2;
+            *dst = '\0';
             return buf;
         }
-        *dst++ = *start;
-        *dst++ = ':';
-        while( *ptr == ':' ) ptr++;
+
+        memcpy( dst, name, 3 );
+        dst += 3;
+        memcpy( dst, &name[sep], len - sep + 1);
+        return buf;
+    }
+    else
+    { 
+        if( m_namespace == Namespace::Short )
+        {
+            auto ptr = name;
+            while( *ptr != '\0' ) ptr++;
+            while( ptr > name && *ptr != ':' ) ptr--;
+            if( *ptr == ':' ) ptr++;
+            return ptr;
+        }
+    
+        static char buf[1024];
+        auto dst = buf;
+        auto ptr = name;
+        for(;;)
+        {
+            auto start = ptr;
+            while( *ptr != '\0' && *ptr != ':' ) ptr++;
+            if( *ptr == '\0' )
+            {
+                memcpy( dst, start, ptr - start + 1 );
+                return buf;
+            }
+            *dst++ = *start;
+            *dst++ = ':';
+            while( *ptr == ':' ) ptr++;
+        }
     }
 }
 
