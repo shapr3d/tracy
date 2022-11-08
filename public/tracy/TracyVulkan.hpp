@@ -450,8 +450,23 @@ public:
         Profiler::QueueSerialFinish();
     }
 
+    tracy_force_inline VkCtxScope(VkCtxScope&& o)
+        : m_active(std::exchange(o.m_active, false))
+        , m_cmdbuf(std::exchange(o.m_cmdbuf, 0))
+        , m_ctx(std::exchange(o.m_ctx, nullptr))
+    {
+    }
+
+    tracy_force_inline VkCtxScope& operator=(VkCtxScope&& o) 
+    {
+        std::swap(m_active, o.m_active);
+        std::swap(m_cmdbuf, o.m_cmdbuf);
+        std::swap(m_ctx, o.m_ctx);
+        return *this;
+    }
+
 private:
-    const bool m_active;
+    bool m_active;
 
     VkCommandBuffer m_cmdbuf;
     VkCtx* m_ctx;
