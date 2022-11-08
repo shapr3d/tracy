@@ -380,8 +380,23 @@ public:
         Profiler::QueueSerialFinish();
     }
 
+    tracy_force_inline D3D11ZoneScope(D3D11ZoneScope&& o)
+        : m_active(std::exchange(o.m_active, false))
+        , m_ctx(std::exchange(o.m_ctx, nullptr))
+        , m_disjointId(std::exchange(o.m_disjointId, 0)) 
+    {
+    }
+
+    tracy_force_inline D3D11ZoneScope& operator=(D3D11ZoneScope&& o) 
+    {
+        std::swap(m_active, o.m_active);
+        std::swap(m_ctx, o.m_ctx);
+        std::swap(m_disjointId, o.m_disjointId);
+        return *this;
+    }
+
 private:
-    const bool m_active;
+    bool m_active;
 
     D3D11Ctx* m_ctx;
     unsigned int m_disjointId;
