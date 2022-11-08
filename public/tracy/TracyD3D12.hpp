@@ -313,7 +313,7 @@ namespace tracy
 
 	class D3D12ZoneScope
 	{
-		const bool m_active;
+		bool m_active;
 		D3D12QueueCtx* m_ctx = nullptr;
 		ID3D12GraphicsCommandList* m_cmdList = nullptr;
 		uint32_t m_queryId = 0;  // Used for tracking in nested zones.
@@ -444,6 +444,23 @@ namespace tracy
 			Profiler::QueueSerialFinish();
 
 			m_cmdList->ResolveQueryData(m_ctx->m_queryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, m_queryId, 2, m_ctx->m_readbackBuffer.Get(), m_queryId * sizeof(uint64_t));
+		}
+
+		tracy_force_inline D3D12ZoneScope(D3D12ZoneScope&& o)
+			: m_active(std::exchange(o.m_active, false))
+			, m_ctx(std::exchange(o.m_ctx, nullptr))
+			, m_cmdList(std::exchange(o.m_cmdList, 0))
+			, m_queryId(std::exchange(o.m_queryId, 0)) 
+		{
+		}
+
+		tracy_force_inline D3D12ZoneScope& operator=(D3D12ZoneScope&& o) 
+		{
+			std::swap(m_active, o.m_active);
+			std::swap(m_ctx, o.m_ctx);
+			std::swap(m_cmdList, o.m_cmdList);
+			std::swap(m_queryId, o.m_queryId);
+			return *this;
 		}
 	};
 
