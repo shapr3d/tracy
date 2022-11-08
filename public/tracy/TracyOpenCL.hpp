@@ -350,7 +350,25 @@ namespace tracy {
             Profiler::QueueSerialFinish();
         }
 
-        const bool m_active;
+        tracy_force_inline OpenCLCtxScope(OpenCLCtxScope&& o)
+            : m_active(std::exchange(o.m_active, false))
+            , m_ctx(std::exchange(o.m_ctx, nullptr))
+            , m_event(std::exchange(o.m_event, 0))
+            , m_beginQueryId(std::exchange(o.m_beginQueryId, 0))
+        {
+        }
+
+        tracy_force_inline OpenCLCtxScope& operator=(OpenCLCtxScope&& o) 
+        {
+            std::swap(m_active, o.m_active);
+            std::swap(m_ctx, o.m_ctx);
+            std::swap(m_event, o.m_event);
+            std::swap(m_beginQueryId, o.m_beginQueryId);
+            return *this;
+        }
+
+    private:
+        bool m_active;
         OpenCLCtx* m_ctx;
         cl_event m_event;
         unsigned int m_beginQueryId;
